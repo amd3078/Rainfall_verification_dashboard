@@ -56,3 +56,16 @@ v5.1 (2026-09-20):
          docs/DEMO_DATA.md (provenance, dimensions, units, conventions).
   - Add CONTRIBUTING.md, CITATION.cff, packages.txt and a GitHub Actions workflow.
   - Remove two byte-identical duplicates of app.py from version control.
+
+v5.1.1 (2026-09-20):
+  - FIX: `coastlines()` imported shapely outside its try block. Because the
+         "Show coastlines / borders" checkbox defaults to on, a pip install without
+         shapely did not merely lose the overlay -- EVERY verification run died with
+         ModuleNotFoundError. The import now sits inside the try, so a missing
+         optional geo dependency degrades to "no coastlines" as the docstring always
+         claimed. (requirements.txt already pins shapely; this is the second line of
+         defence, and it also covers a broken cartopy or an unreadable boundary file.)
+  - Add tests/test_ui.py: 17 tests driving the real Streamlit script through the
+         headless AppTest harness. Covers every mode end to end and cross-checks the
+         UI's probabilistic scores against the scientific functions.
+         Coverage of app.py: 35% -> 87%; _run_multimodel 0% -> 94%.

@@ -502,12 +502,22 @@ pip install pytest
 pytest -q
 ```
 
-The suite covers the scientific functions rather than the user interface: contingency
-counts, all categorical and extremal-dependence scores, continuous scores, CRPS, the
-Brier family, reliability, ROC, rank histogram, PIT, spread–skill, FSS, the CRA
-decomposition, bootstrap behaviour, regridding and unit conversion — including
-perfect-forecast, complete-miss, all-false-alarm, no-event, missing-value,
+109 tests, covering 87% of `app.py`.
+
+**Scientific functions** (`tests/test_categorical.py`, `test_probabilistic.py`,
+`test_spatial.py`, `test_continuous_and_bootstrap.py`, `test_io_and_demo.py`):
+contingency counts, all categorical and extremal-dependence scores, continuous
+scores, CRPS, the Brier family, reliability, ROC, rank histogram, PIT, spread–skill,
+FSS, the CRA decomposition, bootstrap behaviour, regridding and unit conversion —
+including perfect-forecast, complete-miss, all-false-alarm, no-event, missing-value,
 zero-denominator and constant-field edge cases.
+
+**User interface** (`tests/test_ui.py`): driven through Streamlit's headless
+`AppTest` harness, which runs the real script, sets real sidebar widgets and clicks
+the real run button — no browser required. Every mode is exercised end to end
+(ensemble mean and probabilistic, deterministic single and multi-model, daily and
+seasonal, spatial diagnostics, bootstrap), and the probabilistic scores the UI
+renders are checked against the separately tested scientific functions.
 
 ---
 

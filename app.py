@@ -230,9 +230,12 @@ def coastlines(lon0, lon1, lat0, lat1, res="50m"):
     key = (round(lon0,1), round(lon1,1), round(lat0,1), round(lat1,1), res, BOUNDARY_FILE or "ne")
     if key in _COAST:
         return _COAST[key]
-    from shapely.geometry import box as _box
-    clip = _box(lon0, lat0, lon1, lat1); xs, ys = [], []
+    xs, ys = [], []
     try:
+        # Inside the try: the overlay is decoration, so a missing optional geo
+        # dependency must degrade to "no coastlines", never kill the whole run.
+        from shapely.geometry import box as _box
+        clip = _box(lon0, lat0, lon1, lat1)
         if BOUNDARY_FILE and os.path.exists(BOUNDARY_FILE):
             _polylines(_read_boundary_geoms(BOUNDARY_FILE), clip, xs, ys)
         else:
