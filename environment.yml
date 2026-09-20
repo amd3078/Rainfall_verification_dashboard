@@ -1,6 +1,11 @@
 name: rainfall-verif
 channels:
   - conda-forge
+  - nodefaults          # do NOT append Anaconda's defaults channel:
+                        # repo.anaconda.com now refuses non-interactive use until
+                        # its Terms of Service are accepted (CondaToSNonInteractiveError),
+                        # and its licence requires payment for larger organisations.
+                        # Everything here lives on conda-forge anyway.
 dependencies:
   - python>=3.10
   - streamlit>=1.30

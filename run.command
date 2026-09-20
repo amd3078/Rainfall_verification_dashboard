@@ -3,6 +3,12 @@
 # builds the conda env, then starts the app and opens the browser. No manual setup.
 set -e
 cd "$(dirname "$0")"
+# Never stop for an interactive prompt. Anaconda/Miniconda installs carry a
+# Terms-of-Service plugin that otherwise aborts with CondaToSNonInteractiveError
+# and the setup dies half way. Harmless where the plugin is absent (Miniforge).
+export CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes
+export CONDA_ALWAYS_YES=yes
+
 ENV=rainfall-verif
 MC="$HOME/miniconda3"
 
@@ -11,7 +17,11 @@ CONDA=""
 for c in mamba conda "$MC/bin/conda"; do command -v "$c" >/dev/null 2>&1 && { CONDA="$c"; break; }; done
 if [ -z "$CONDA" ] && [ -x "$MC/bin/conda" ]; then CONDA="$MC/bin/conda"; fi
 if [ -z "$CONDA" ]; then
-  echo "[setup] Miniconda not found — installing it (one time)…"
+  # Miniforge, not Miniconda: conda-forge by default, so repo.anaconda.com is
+  # never consulted. Anaconda's channels now refuse non-interactive use until
+  # their Terms of Service are accepted, and their licence requires payment for
+  # larger organisations. Miniforge also ships mamba.
+  echo "[setup] conda not found — installing Miniforge (one time)…"
   # Pick the installer for THIS machine. Previously hard-coded to MacOSX, which
   # downloaded a macOS installer on Linux and failed.
   case "$(uname -s)" in
@@ -23,7 +33,7 @@ if [ -z "$CONDA" ]; then
     arm64|aarch64) A=$( [ "$OSTAG" = "MacOSX" ] && echo arm64 || echo aarch64 ) ;;
     *)             A=x86_64 ;;
   esac
-  URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-$OSTAG-$A.sh"
+  URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$OSTAG-$A.sh"
   curl -L -o /tmp/miniconda.sh "$URL"
   bash /tmp/miniconda.sh -b -p "$MC"
   rm -f /tmp/miniconda.sh
@@ -43,6 +53,13 @@ esac
 
 # 2. set up env ONLY if needed. The truth test is whether the env's python can import
 #    everything (robust — never parse `env list` text, whose indentation varies by tool).
+# If this machine already has Miniconda/Anaconda, accept its channel Terms of
+# Service quietly so the solve cannot stop and ask. No-op on Miniforge, which has
+# no such plugin, and on conda builds predating the `tos` subcommand.
+for _c in main r msys2; do
+  "$CONDA" tos accept --override-channels --channel "https://repo.anaconda.com/pkgs/$_c" >/dev/null 2>&1 || true
+done
+
 CHECK='import streamlit,xarray,scipy,plotly,pandas,netCDF4,shapely,cartopy,cfgrib'
 have_env() { "$CONDA" run -n "$ENV" python -c "$CHECK" >/dev/null 2>&1; }
 # loose match (env line may be indented and/or shown as a path) to decide update-vs-create

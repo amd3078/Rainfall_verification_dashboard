@@ -116,3 +116,26 @@ v5.2.1 (2026-09-20) -- launcher portability:
          leaving the conda path with the same latent breakage fixed for pip in
          v5.1.1. The launchers' env readiness check now tests shapely too.
   - .shortcut_done (written by run.bat on first run) added to .gitignore.
+
+v5.2.2 (2026-09-20) -- one-double-click setup on a clean machine:
+  - FIX: setup aborted on Windows with
+           CondaToSNonInteractiveError: Terms of Service have not been accepted
+           for the following channels: repo.anaconda.com/pkgs/{main,r,msys2}
+         environment.yml asked for conda-forge, but conda APPENDS Anaconda's
+         `defaults` channel unless told not to, and those channels now refuse
+         non-interactive use. The env create failed, the retry failed the same way,
+         and the launcher gave up -- a new user could not install the app at all.
+         Three changes so it now completes in one go with no manual step:
+           1. environment.yml pins `- nodefaults`, so Anaconda's channels are never
+              consulted. Verified by a dry-run solve: 25 packages, all from
+              conda-forge, 0 from pkgs/main, pkgs/r or pkgs/msys2.
+           2. The launchers set CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes and
+              CONDA_ALWAYS_YES=yes before any conda call, and quietly run
+              `conda tos accept` for each Anaconda channel, so a machine that
+              already has Miniconda/Anaconda never stops to ask.
+           3. When no conda is present, the launchers now install Miniforge rather
+              than Miniconda. Miniforge defaults to conda-forge, carries no
+              Terms-of-Service plugin, ships mamba, and avoids Anaconda's paid
+              licence requirement for larger organisations.
+  - The failure message no longer blames low memory for every failure; it now names
+         the likely cause (ToS, memory, or network) with the exact fix for each.

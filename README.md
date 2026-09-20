@@ -94,9 +94,17 @@ Each opens **your default browser** at `http://localhost:8501` — Windows via
 it). No browser is hard-coded. If none can be opened automatically the URL is
 printed for you to click.
 
-They require [Miniconda or Miniforge](https://conda-forge.org/download/) to be
-installed. On first run each also creates a desktop shortcut, so subsequent launches
-are a single double-click.
+No prerequisites. If conda is not already installed, the launcher installs
+[Miniforge](https://conda-forge.org/download/) itself, builds the environment and
+starts the app — one double-click, no manual steps. On first run each also creates a
+desktop shortcut, so later launches are a single double-click.
+
+> Miniforge is used rather than Miniconda because it defaults to conda-forge.
+> Anaconda's channels (`repo.anaconda.com`) now refuse non-interactive use until
+> their Terms of Service are accepted — which aborted setup with
+> `CondaToSNonInteractiveError` — and their licence requires payment for larger
+> organisations. `environment.yml` pins `nodefaults` so those channels are never
+> consulted even on a machine that already has Anaconda or Miniconda installed.
 
 ---
 

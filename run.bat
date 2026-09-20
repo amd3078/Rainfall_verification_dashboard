@@ -3,21 +3,41 @@ REM Double-click launcher (Windows). First run: auto-installs Miniconda if absen
 REM builds the conda env, then starts the app and opens the browser. No manual setup.
 setlocal
 cd /d "%~dp0"
+
+REM Never stop for an interactive prompt. Anaconda/Miniconda installs carry a
+REM Terms-of-Service plugin that otherwise aborts with CondaToSNonInteractiveError
+REM and the setup dies half way. Harmless where the plugin is absent (Miniforge).
+set CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes
+set CONDA_ALWAYS_YES=yes
 set ENV=rainfall-verif
-set MC=%USERPROFILE%\miniconda3
+set MC=%USERPROFILE%\miniforge3
 
 REM 1. find conda/mamba, else auto-install Miniconda
 set CONDA=
 where mamba >nul 2>&1 && set "CONDA=mamba"
 if not defined CONDA (where conda >nul 2>&1 && set "CONDA=conda")
 if not defined CONDA if exist "%MC%\Scripts\conda.exe" set "CONDA=%MC%\Scripts\conda.exe"
+if not defined CONDA if exist "%USERPROFILE%\miniconda3\Scripts\conda.exe" set "CONDA=%USERPROFILE%\miniconda3\Scripts\conda.exe"
 
 if not defined CONDA (
-  echo [setup] Miniconda not found - installing it ^(one time^)...
-  curl -L -o "%TEMP%\miniconda.exe" https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe
-  start /wait "" "%TEMP%\miniconda.exe" /InstallationType=JustMe /RegisterPython=0 /S /D=%MC%
-  del "%TEMP%\miniconda.exe"
+  REM Miniforge, not Miniconda: it defaults to conda-forge, so it never touches
+  REM repo.anaconda.com. Anaconda's channels now refuse non-interactive use until
+  REM their Terms of Service are accepted, and their licence requires payment for
+  REM larger organisations. Miniforge also ships mamba, which solves faster.
+  echo [setup] conda not found - installing Miniforge ^(one time^)...
+  curl -L -o "%TEMP%\miniforge.exe" https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe
+  start /wait "" "%TEMP%\miniforge.exe" /InstallationType=JustMe /RegisterPython=0 /S /D=%MC%
+  del "%TEMP%\miniforge.exe"
   set "CONDA=%MC%\Scripts\conda.exe"
+)
+
+REM If this machine already has Miniconda/Anaconda, its `defaults` channel needs
+REM its Terms of Service accepted before conda will run non-interactively. The
+REM env itself is built from conda-forge only (environment.yml pins `nodefaults`),
+REM but the solver still checks configured channels. Accept quietly; ignore
+REM failures on conda builds that predate the `tos` subcommand.
+for %%C in (main r msys2) do (
+  "%CONDA%" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/%%C >nul 2>&1
 )
 
 REM 1b. use the libmamba solver (C++): the classic solver runs OUT OF MEMORY loading
@@ -47,7 +67,25 @@ if "%NEED%"=="1" (
   echo [run] environment ready.
 )
 REM guard on the IMPORT check (not env-list text): stop clearly only if the env truly can't import
-"%CONDA%" run -n %ENV% python -c "%CHECK%" >nul 2>&1 || ( echo [ERROR] Env "%ENV%" isn't working ^(see messages above - often low memory during solve^). Close other apps and re-run. & pause & exit /b 1 )
+"%CONDA%" run -n %ENV% python -c "%CHECK%" >nul 2>&1 || (
+  echo.
+  echo [ERROR] The environment "%ENV%" could not be created. Check the messages above.
+  echo.
+  echo   * "CondaToSNonInteractiveError / Terms of Service have not been accepted"
+  echo       An existing Anaconda/Miniconda install is blocking. Run these three
+  echo       commands once, then re-run this launcher:
+  echo         conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+  echo         conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+  echo         conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/msys2
+  echo.
+  echo   * "Killed" / the solve stops with no message
+  echo       Low memory. Close other applications and re-run.
+  echo.
+  echo   * "CondaHTTPError" / connection failures
+  echo       Network or proxy problem reaching conda-forge.
+  echo.
+  pause & exit /b 1
+)
 
 REM 2b. create a Desktop / Start-Menu icon once, so future launches are a single double-click
 if not exist "%~dp0.shortcut_done" (
