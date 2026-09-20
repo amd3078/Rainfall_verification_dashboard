@@ -10,6 +10,7 @@ dependencies:
   - pandas>=2.0
   - xarray>=2023.1
   - netcdf4>=1.6
+  - shapely>=2.0         # boundary/coastline clipping - imported directly by app.py
   - cartopy>=0.22        # coastline / boundary overlay
   - python-kaleido       # export figures to PNG/JPEG/SVG/PDF
   - cfgrib>=0.9          # GRIB2 reading

@@ -32,7 +32,7 @@ echo %CONDA% | findstr /i "mamba" >nul || (
 
 REM 2. set up env ONLY if needed. Truth test = can the env's python import everything?
 REM     (Never rely on `env list` text — its indentation varies by conda/mamba version.)
-set CHECK=import streamlit,xarray,scipy,plotly,pandas,netCDF4,cartopy,cfgrib
+set CHECK=import streamlit,xarray,scipy,plotly,pandas,netCDF4,shapely,cartopy,cfgrib
 set NEED=1
 "%CONDA%" run -n %ENV% python -c "%CHECK%" >nul 2>&1 && set NEED=0
 if "%NEED%"=="1" ( "%CONDA%" env list | findstr /i "%ENV%" >nul 2>&1 && set NEED=2 )

@@ -33,7 +33,7 @@ esac
 
 # 2. set up env ONLY if needed. The truth test is whether the env's python can import
 #    everything (robust — never parse `env list` text, whose indentation varies by tool).
-CHECK='import streamlit,xarray,scipy,plotly,pandas,netCDF4,cartopy,cfgrib'
+CHECK='import streamlit,xarray,scipy,plotly,pandas,netCDF4,shapely,cartopy,cfgrib'
 have_env() { "$CONDA" run -n "$ENV" python -c "$CHECK" >/dev/null 2>&1; }
 # loose match (env line may be indented and/or shown as a path) to decide update-vs-create
 env_registered() { "$CONDA" env list | grep -qiE "(^|[ /])$ENV([ ]|/|\$)"; }

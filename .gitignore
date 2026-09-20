@@ -173,6 +173,9 @@ verification-toolkit-*/
 scratch/
 tmp/
 
+# --- Launcher state (run.bat / run.command write these on first run) -------
+.shortcut_done
+
 # --- Local-only developer tooling (kept on disk, not published) ------------
 make_bundle.sh
 HOW_TO_RUN.txt
