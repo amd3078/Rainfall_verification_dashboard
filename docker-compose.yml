@@ -1,0 +1,14 @@
+services:
+  dashboard:
+    build: .
+    image: rainfall-verif
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/data          # put forecast/obs here, point sidebar at /data
+      - ./logs:/app/logs      # persist audit log
+    environment:
+      - VERIF_DATA_DIR=/data
+      # - VERIF_OBS=/data/obs.nc
+      # - VERIF_FIREBASE_CRED=/data/serviceAccountKey.json   # optional
+    restart: unless-stopped

@@ -1,0 +1,43 @@
+# Citation metadata (Citation File Format 1.2.0) — https://citation-file-format.github.io
+
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "Rainfall Verification Dashboard"
+abstract: >-
+  An interactive Streamlit application for verifying gridded deterministic and
+  ensemble precipitation forecasts against gridded observations. Provides
+  categorical, extremal-dependence, continuous, probabilistic and spatial
+  verification scores, ensemble diagnostic plots, per-grid-cell score maps and
+  bootstrap confidence intervals, for NetCDF and GRIB2 input.
+
+type: software
+license: MIT
+repository-code: "https://github.com/amd3078/Rainfall_verification_dashboard"
+
+authors:
+  - family-names: "Dube"
+    given-names: "Anumeha"
+    orcid: "https://orcid.org/0000-0002-0341-6955"
+
+version: "5.0"
+date-released: "2026-09-20"
+
+keywords:
+  - forecast verification
+  - precipitation
+  - rainfall
+  - ensemble forecasting
+  - probabilistic forecasting
+  - spatial verification
+  - numerical weather prediction
+  - meteorology
+  - streamlit
+
+# Optional additions once available:
+# doi: "10.5281/zenodo.XXXXXXX"          # archive a release via Zenodo to mint one
+# preferred-citation:                     # add if a paper describes this software
+#   type: article
+#   title: "..."
+#   journal: "..."
+#   year: 0000
+#   doi: "..."

@@ -1,0 +1,19 @@
+name: rainfall-verif
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - streamlit>=1.30
+  - plotly>=5.18
+  - numpy>=1.24
+  - scipy>=1.10
+  - pandas>=2.0
+  - xarray>=2023.1
+  - netcdf4>=1.6
+  - cartopy>=0.22        # coastline / boundary overlay
+  - python-kaleido       # export figures to PNG/JPEG/SVG/PDF
+  - cfgrib>=0.9          # GRIB2 reading
+  - eccodes>=2.31        # GRIB backend
+  - pip
+  - pip:
+      - firebase-admin>=6.5   # optional: Firestore audit

@@ -1,0 +1,40 @@
+# Rainfall Verification Dashboard — core runtime dependencies
+# Python >= 3.10 required.
+#
+#   pip install -r requirements.txt
+#   streamlit run app.py
+#
+# Lower bounds only: they pin the APIs the code actually relies on without
+# freezing transitive dependencies, so the app stays installable over time.
+
+streamlit>=1.30          # UI, caching (st.cache_data), file upload
+numpy>=1.24              # numerics (np.trapezoid fallback handled in app.py)
+pandas>=2.0              # score tables, CSV export
+scipy>=1.10              # RegularGridInterpolator (regrid), uniform_filter (FSS)
+xarray>=2023.1           # NetCDF/GRIB dataset access, lazy slicing
+netCDF4>=1.6             # xarray engine for .nc / .nc4 files
+plotly>=5.18             # all interactive figures and maps
+kaleido>=0.2.1           # static figure export (PNG/JPEG/SVG/PDF)
+shapely>=2.0             # boundary/coastline polyline clipping (see note below)
+
+# NOTE on shapely: app.coastlines() imports shapely unconditionally. Without it
+# the "Show coastlines / country borders" option raises ModuleNotFoundError,
+# so it is a hard requirement, not an optional extra.
+
+# ---------------------------------------------------------------------------
+# OPTIONAL extras — not installed by default. Install only if you need them.
+# ---------------------------------------------------------------------------
+#
+# GRIB2 input (needs the ECMWF ecCodes C library, see packages.txt / README):
+#   cfgrib>=0.9.10
+#   eccodes>=1.6
+#   conda install -c conda-forge cfgrib eccodes        # recommended route
+#
+# Natural Earth coastlines when no VERIF_BOUNDARY file is supplied:
+#   conda install -c conda-forge cartopy               # pip build is fragile
+#
+# Reading ESRI shapefile boundaries when cartopy is absent:
+#   geopandas>=0.14
+#
+# Central Firestore audit log (entirely optional; local JSONL works without it):
+#   firebase-admin>=6.5

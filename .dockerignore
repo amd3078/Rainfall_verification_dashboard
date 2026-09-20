@@ -1,0 +1,11 @@
+.git
+.gitignore
+__pycache__/
+*.log
+logs/
+.env
+.code-review-graph/
+data/
+*.nc
+!demo_data/*.nc
+.venv/

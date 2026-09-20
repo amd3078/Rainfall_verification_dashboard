@@ -1,0 +1,14 @@
+[server]
+headless = true
+address = "0.0.0.0"
+port = 8501
+maxUploadSize = 2000          # MB — allow large NetCDF uploads
+enableXsrfProtection = true
+fileWatcherType = "none"      # no reload churn on a server
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"
+primaryColor = "#0072B2"

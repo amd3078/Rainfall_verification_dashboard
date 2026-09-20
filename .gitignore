@@ -1,0 +1,178 @@
+# ---------------------------------------------------------------------------
+# Rainfall Verification Dashboard — .gitignore
+# Principle: large/raw/operational data excluded; the small synthetic demo
+# dataset in demo_data/ is intentionally committed (see docs/DEMO_DATA.md).
+# ---------------------------------------------------------------------------
+
+# --- Meteorological data (raw / operational / downloaded) ------------------
+*.nc
+*.nc4
+*.cdf
+*.grib
+*.grib2
+*.grb
+*.grb2
+*.h5
+*.hdf5
+*.hdf
+*.zarr/
+*.idx
+*.npy
+*.npz
+*.pkl
+*.pickle
+
+# Data directories that must never be published
+data/
+raw_data/
+obs/
+observations/
+forecasts/
+archive/
+boundary/
+
+# ...but DO ship the small SYNTHETIC demo so the app runs with zero setup.
+!demo_data/
+!demo_data/**/
+!demo_data/**/*.nc
+
+# --- Generated output ------------------------------------------------------
+output/
+outputs/
+results/
+exports/
+figures/
+plots/
+*.csv
+!docs/**/*.csv
+*.pdf
+!docs/**/*.pdf
+*.svg
+!docs/**/*.svg
+
+# Generated images, except explicitly curated README screenshots
+*.jpg
+*.jpeg
+!docs/images/**
+!app_icon.png
+!app_icon.ico
+!app_icon.icns
+
+# --- Secrets / private configuration ---------------------------------------
+.env
+.env.*
+!.env.example
+*serviceAccount*.json
+*firebase*.json
+*-firebase-adminsdk-*.json
+*-credentials.json
+*credentials*.json
+secrets.toml
+.streamlit/secrets.toml
+*.pem
+*.key
+id_rsa*
+*.p12
+
+# --- Logs / audit ----------------------------------------------------------
+logs/
+*.log
+audit.jsonl
+dashboard.pid
+
+# --- Python ----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib60/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# --- Environments ----------------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+.conda/
+conda-env/
+.python-version
+
+# --- Test / lint caches ----------------------------------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+
+# --- Streamlit -------------------------------------------------------------
+.streamlit/secrets.toml
+.streamlit/cache/
+
+# --- Notebooks -------------------------------------------------------------
+.ipynb_checkpoints/
+
+# --- IDE / editor ----------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.spyderproject
+.spyproject
+
+# --- OS metadata -----------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# --- Archives / build artefacts / packaged bundles -------------------------
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+*.dmg
+*.app/
+*.exe
+
+# --- Superseded / duplicate local project snapshots ------------------------
+rainfall-verif-*/
+verification-toolkit-*/
+*_old.py
+*_backup.py
+*_copy.py
+*_final.py
+*_final[0-9].py
+*_stable.py
+
+# --- Misc local dev --------------------------------------------------------
+.code-review-graph/
+scratch/
+tmp/
+
+# --- Local-only developer tooling (kept on disk, not published) ------------
+make_bundle.sh
+HOW_TO_RUN.txt
