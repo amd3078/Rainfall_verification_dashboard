@@ -12,8 +12,18 @@ for c in mamba conda "$MC/bin/conda"; do command -v "$c" >/dev/null 2>&1 && { CO
 if [ -z "$CONDA" ] && [ -x "$MC/bin/conda" ]; then CONDA="$MC/bin/conda"; fi
 if [ -z "$CONDA" ]; then
   echo "[setup] Miniconda not found — installing it (one time)…"
-  ARCH=$(uname -m); case "$ARCH" in arm64) A=arm64;; *) A=x86_64;; esac
-  URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-$A.sh"
+  # Pick the installer for THIS machine. Previously hard-coded to MacOSX, which
+  # downloaded a macOS installer on Linux and failed.
+  case "$(uname -s)" in
+    Darwin) OSTAG="MacOSX" ;;
+    Linux)  OSTAG="Linux"  ;;
+    *) echo "[setup] unsupported OS $(uname -s) - install Miniconda manually: https://docs.conda.io/projects/miniconda/"; exit 1 ;;
+  esac
+  case "$(uname -m)" in
+    arm64|aarch64) A=$( [ "$OSTAG" = "MacOSX" ] && echo arm64 || echo aarch64 ) ;;
+    *)             A=x86_64 ;;
+  esac
+  URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-$OSTAG-$A.sh"
   curl -L -o /tmp/miniconda.sh "$URL"
   bash /tmp/miniconda.sh -b -p "$MC"
   rm -f /tmp/miniconda.sh
@@ -68,5 +78,19 @@ fi
 lsof -ti:8501 2>/dev/null | xargs kill -9 2>/dev/null || true
 [ -f .env ] && { set -a; . ./.env; set +a; }
 echo "[run] opening http://localhost:8501"
-( sleep 4; open http://localhost:8501 2>/dev/null ) &
+# Open the user's DEFAULT browser - never a hard-coded one. `open` is macOS,
+# `xdg-open` is the freedesktop standard on Linux, $BROWSER is the user override,
+# and Python's webbrowser module is the last resort. If all fail, the URL is
+# already printed above, so the user can click or paste it.
+open_browser() {
+  url="http://localhost:8501"
+  if [ -n "${BROWSER:-}" ] && command -v "$BROWSER" >/dev/null 2>&1; then "$BROWSER" "$url" >/dev/null 2>&1 && return 0; fi
+  for opener in xdg-open open gio\ open gnome-open kde-open wslview; do
+    # shellcheck disable=SC2086
+    command -v ${opener%% *} >/dev/null 2>&1 && { $opener "$url" >/dev/null 2>&1 && return 0; }
+  done
+  "$CONDA" run -n "$ENV" python -m webbrowser "$url" >/dev/null 2>&1 && return 0
+  echo "[run] could not open a browser automatically - go to $url"
+}
+( sleep 4; open_browser ) &
 "$CONDA" run -n "$ENV" streamlit run app.py --server.port 8501 --server.headless true

@@ -99,3 +99,20 @@ v5.2 (2026-09-20) -- security hardening:
   - CI: add a pip-audit dependency-vulnerability job.
          Audited at release: no known CVEs in any runtime dependency.
   Test suite: 109 -> 134, all passing. No verification formula was changed.
+
+v5.2.1 (2026-09-20) -- launcher portability:
+  - FIX: run.command opened the browser with `open`, which exists only on macOS.
+         On Linux it failed silently (stderr was discarded), so no browser opened
+         at all -- despite the README listing run.command as the macOS/Linux
+         launcher. Now tries $BROWSER, then xdg-open/open/gio open/gnome-open/
+         kde-open/wslview, then python -m webbrowser, and prints the URL if every
+         option fails. Always the user's DEFAULT browser; none is hard-coded.
+  - FIX: run.command hard-coded the macOS Miniconda installer
+         (Miniconda3-latest-MacOSX-$ARCH.sh), so auto-install on Linux fetched a
+         macOS installer and failed. The OS is now detected, and `aarch64` is
+         mapped correctly (it previously fell through to x86_64 on ARM Linux).
+         All four resulting URLs verified to return HTTP 200.
+  - FIX: environment.yml never declared shapely; it arrived only via cartopy,
+         leaving the conda path with the same latent breakage fixed for pip in
+         v5.1.1. The launchers' env readiness check now tests shapely too.
+  - .shortcut_done (written by run.bat on first run) added to .gitignore.

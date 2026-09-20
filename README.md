@@ -89,6 +89,11 @@ create the conda environment on first run, start the server and open the browser
 | macOS / Linux | `run.command` |
 | Windows | `run.bat` |
 
+Each opens **your default browser** at `http://localhost:8501` — Windows via
+`start`, macOS via `open`, Linux via `xdg-open` (respecting `$BROWSER` if you set
+it). No browser is hard-coded. If none can be opened automatically the URL is
+printed for you to click.
+
 They require [Miniconda or Miniforge](https://conda-forge.org/download/) to be
 installed. On first run each also creates a desktop shortcut, so subsequent launches
 are a single double-click.
