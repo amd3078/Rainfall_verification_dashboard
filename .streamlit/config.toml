@@ -1,8 +1,14 @@
 [server]
 headless = true
-address = "0.0.0.0"
+# Loopback by default: the dashboard has no authentication, and the sidebar
+# takes free-text server paths, so exposing it on a network exposes every file
+# the process can read. Serve it to other machines only behind a reverse proxy
+# that authenticates, and pass the bind address explicitly there:
+#   streamlit run app.py --server.address=0.0.0.0
+# (the Dockerfile does this, since a container must bind all interfaces).
+address = "127.0.0.1"
 port = 8501
-maxUploadSize = 2000          # MB — allow large NetCDF uploads
+maxUploadSize = 500           # MB — large enough for NetCDF, bounded against disk-fill
 enableXsrfProtection = true
 fileWatcherType = "none"      # no reload churn on a server
 

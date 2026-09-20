@@ -42,6 +42,12 @@ python app.py --selftest >/dev/null 2>&1 && echo "[deploy] self-test OK" || echo
 
 # 4. launch
 echo "[deploy] starting on http://0.0.0.0:$PORT"
+echo "[deploy] WARNING: binding 0.0.0.0 exposes this dashboard on the network."
+echo "[deploy]          It has no authentication and its sidebar opens arbitrary"
+echo "[deploy]          server paths. Put it behind an authenticating reverse"
+echo "[deploy]          proxy, and set VERIF_ROOT to confine file access."
+[ -n "${VERIF_ROOT:-}" ] && echo "[deploy] VERIF_ROOT=$VERIF_ROOT (file access confined)" \
+                        || echo "[deploy] VERIF_ROOT is NOT set -- file access is unrestricted."
 CMD=(streamlit run app.py --server.port "$PORT" --server.address 0.0.0.0 --server.headless true)
 if [ "${1:-}" = "--background" ]; then
   nohup "${CMD[@]}" > dashboard.log 2>&1 &

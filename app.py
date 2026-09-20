@@ -66,6 +66,57 @@ DEFAULT_OBS = os.environ.get("VERIF_OBS") or _DEMO_OBS
 if not os.path.exists(DEFAULT_OBS): DEFAULT_OBS = _DEMO_OBS
 RAIN_VARS = ["rf", "APCP_24", "APCP_surface", "precip", "precipitation", "tp"]
 
+# ---------------------------------------------------------------- path safety
+# The sidebar takes free-text server paths. On a single-user desktop that is the
+# whole point. When the dashboard is served to other people it is an arbitrary
+# file-read primitive, so VERIF_ROOT lets the operator confine every path the UI
+# will open to one directory tree. Unset (the default) = previous behaviour.
+VERIF_ROOT = os.environ.get("VERIF_ROOT") or None
+if VERIF_ROOT:
+    VERIF_ROOT = os.path.realpath(os.path.expanduser(VERIF_ROOT))
+
+# Temp directories created by _save() for browser uploads. Uploads legitimately
+# live outside VERIF_ROOT, so they are allowed explicitly rather than by pattern.
+_UPLOAD_DIRS = set()
+
+class PathNotAllowed(Exception):
+    """A requested path resolves outside VERIF_ROOT."""
+
+def safe_path(p):
+    """Resolve `p` and, when VERIF_ROOT is set, refuse anything outside it.
+
+    Resolves symlinks first, so a link inside the root pointing out of it is
+    rejected too. Returns the resolved path; raises PathNotAllowed otherwise.
+    """
+    if not p: raise PathNotAllowed("empty path")
+    rp = os.path.realpath(os.path.expanduser(str(p)))
+    if VERIF_ROOT is None: return rp
+    if rp == VERIF_ROOT or rp.startswith(VERIF_ROOT + os.sep): return rp
+    if any(rp == u or rp.startswith(u + os.sep) for u in _UPLOAD_DIRS): return rp
+    if rp == _DEMO_DIR or rp.startswith(_DEMO_DIR + os.sep): return rp   # bundled demo always allowed
+    raise PathNotAllowed(f"path is outside VERIF_ROOT ({VERIF_ROOT}): {p}")
+
+def path_ok(p):
+    """True when safe_path(p) would succeed. For UI checks that must not raise."""
+    try: safe_path(p); return True
+    except PathNotAllowed: return False
+
+def safe_upload_name(name):
+    """Filename for an uploaded file, stripped to a bare basename.
+
+    `os.path.join(tmpdir, name)` silently discards tmpdir when `name` is
+    absolute, and honours '..' segments, so an uploaded file could be written
+    anywhere the process can write. Only the final component is ever used.
+    """
+    base = os.path.basename(str(name or "").replace("\\", "/").strip())
+    base = base.lstrip(".") or "upload"          # no '..', no dotfiles
+    return "".join(c for c in base if c.isalnum() or c in "._- ")[:128] or "upload"
+
+# Upper bound on how many sub-directories a single scan will stat. A user can
+# type any directory into the sidebar; pointing it at '/' otherwise walks the
+# whole filesystem and hangs the server.
+MAX_SCAN_SUBDIRS = int(os.environ.get("VERIF_MAX_SCAN_SUBDIRS", "500"))
+
 import contextlib
 def _nullctx(): return contextlib.nullcontext()
 
@@ -87,6 +138,7 @@ _DSCACHE={}   # keep NetCDF files open across dates/reruns -> no repeated file-o
 _TVCACHE={}   # cached datetime64[D] time axis per path
 
 def _open(path):
+    path = safe_path(path)                       # chokepoint: every NetCDF read passes here
     ds = _DSCACHE.get(path)
     if ds is None:
         ds = xr.open_dataset(path, decode_times=True); _DSCACHE[path] = ds   # lazy; not closed
@@ -471,6 +523,7 @@ GRIB_EXT=(".grib",".grib2",".grb",".grb2")
 def _is_grib(p): return p.lower().endswith(GRIB_EXT)
 def open_any(path):
     """Open NetCDF or GRIB2 transparently."""
+    path = safe_path(path)                       # chokepoint: every GRIB/NetCDF read passes here
     if _is_grib(path):
         return xr.open_dataset(path, engine="cfgrib", backend_kwargs={"indexpath":""})
     return xr.open_dataset(path)
@@ -599,7 +652,9 @@ def discover_models(base):
     """{model_name: (files,...)}. Sub-folders => one model each, BUT a folder whose files span
     several models (e.g. merged NCUM_day*/GFS_day*) is split into 'folder/MODEL'. A flat base
     (no sub-folders) is grouped by model name directly."""
-    subs=[d for d in os.listdir(base) if os.path.isdir(os.path.join(base,d)) and _has_fc(os.path.join(base,d))]
+    base=safe_path(base)
+    names=sorted(os.listdir(base))[:MAX_SCAN_SUBDIRS]   # bounded: '/' must not walk the filesystem
+    subs=[d for d in names if os.path.isdir(os.path.join(base,d)) and _has_fc(os.path.join(base,d))]
     if subs:
         out={}
         for d in subs:
@@ -1576,8 +1631,18 @@ def run_app():
             st.caption("Reliability/ROC/REV use exceedance prob at the threshold. Rank histogram & spread–skill use raw member values. All pooled over grid points inside the box for the selected date.")
 
 def _save(u):
-    import tempfile; p=os.path.join(tempfile.gettempdir(),u.name); buf=u.getbuffer(); open(p,"wb").write(buf)
-    audit(dict(event="upload", file=u.name, bytes=int(getattr(buf,"nbytes",len(buf)))))
+    """Persist an uploaded file to a private temp directory.
+
+    The name is reduced to a bare basename: an absolute or '..'-bearing upload
+    name would otherwise let the writer choose any path on the host.
+    """
+    import tempfile
+    d = tempfile.mkdtemp(prefix="verif_upload_")          # private dir, no collisions
+    _UPLOAD_DIRS.add(os.path.realpath(d))
+    p = os.path.join(d, safe_upload_name(u.name))
+    buf = u.getbuffer(); open(p, "wb").write(buf)
+    audit(dict(event="upload", file=safe_upload_name(u.name),
+               bytes=int(getattr(buf, "nbytes", len(buf)))))
     return p
 
 if __name__=="__main__":

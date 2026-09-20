@@ -40,6 +40,27 @@ jobs:
       - name: Check the demo data loads
         run: python app.py --selftest
 
+  security:
+    name: dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies and pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pip-audit
+
+      # Audits the project's runtime dependencies for known CVEs.
+      # --ignore-vuln for pip itself: it is the installer, not a shipped dependency.
+      - name: Audit dependencies for known vulnerabilities
+        run: pip-audit --progress-spinner off --skip-editable
+
   lint:
     name: syntax and import check
     runs-on: ubuntu-latest

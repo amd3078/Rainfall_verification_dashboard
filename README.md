@@ -28,6 +28,7 @@ runs immediately after installation with no external data required.
 - [Using your own data](#using-your-own-data)
 - [Optional features](#optional-features)
 - [Tests](#tests)
+- [Security](#security)
 - [Documentation](#documentation)
 - [Author](#author)
 - [Citation](#citation)
@@ -454,6 +455,24 @@ one valid date.
 
 ---
 
+## Security
+
+The dashboard **has no authentication** and its sidebar opens files by server-side
+path — by design, so that you can point it at a data archive instead of uploading
+gigabytes. That is safe on your own machine and unsafe on an open network.
+
+The shipped configuration binds **loopback only** (`127.0.0.1`), so a default
+install is not reachable from the network. Before serving it to anyone else:
+
+```bash
+export VERIF_ROOT=/data/verification   # confine all file access to one tree
+```
+
+and put it behind a reverse proxy that authenticates. Full guidance, including what
+the audit log records, is in [`SECURITY.md`](SECURITY.md).
+
+---
+
 ## Using your own data
 
 Set the paths in the sidebar, or through environment variables:
@@ -527,6 +546,8 @@ renders are checked against the separately tested scientific functions.
   references and known methodological caveats.
 - [`docs/DEMO_DATA.md`](docs/DEMO_DATA.md) — what the bundled demo dataset contains
   and how it is generated.
+- [`SECURITY.md`](SECURITY.md) — **threat model and deployment guidance. Read this
+  before serving the dashboard to anyone other than yourself.**
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — development setup and the rules for adding
   or changing a verification metric.
 - [`CHANGELOG.md`](CHANGELOG.md) — release history and what changed in each version.

@@ -69,3 +69,33 @@ v5.1.1 (2026-09-20):
          headless AppTest harness. Covers every mode end to end and cross-checks the
          UI's probabilistic scores against the scientific functions.
          Coverage of app.py: 35% -> 87%; _run_multimodel 0% -> 94%.
+
+v5.2 (2026-09-20) -- security hardening:
+  - FIX (high): `_save()` built an upload path with os.path.join(tempdir, u.name).
+         An absolute upload name discards tempdir entirely and '..' segments traverse
+         out of it, so an uploaded file could be written anywhere the process could
+         write -- including over app.py. Names are now reduced to a sanitised bare
+         basename and written into a freshly created private temp directory.
+  - FIX (high): added optional VERIF_ROOT confinement. The sidebar takes free-text
+         server paths with no restriction, which on a shared deployment is an
+         arbitrary file-read and directory-enumeration primitive. Setting VERIF_ROOT
+         confines every path the app opens to one tree; symlinks are resolved before
+         the check, so a link inside the root pointing out of it is refused. The
+         guard sits at the two open chokepoints (_open, open_any) plus
+         discover_models, not only at the UI inputs. Unset = previous behaviour.
+  - FIX (high): the bundled config bound 0.0.0.0, exposing an unauthenticated
+         dashboard on the network. It now binds 127.0.0.1. Docker and deploy.sh pass
+         --server.address=0.0.0.0 explicitly, so intentional exposure still works,
+         and deploy.sh now prints a warning naming the risk.
+  - FIX (medium): folder scans are bounded by VERIF_MAX_SCAN_SUBDIRS (default 500).
+         Pointing the sidebar at "/" previously walked the filesystem and hung the
+         server -- reproduced, >120 s before being killed.
+  - FIX (medium): server.maxUploadSize reduced from 2000 MB to 500 MB.
+  - Add SECURITY.md: threat model, per-deployment guidance, hardening options, what
+         the audit log records, and private vulnerability reporting.
+  - Add tests/test_security.py (25 tests) covering upload-name sanitisation,
+         VERIF_ROOT confinement including symlink escape and traversal, the scan cap
+         and the shipped configuration.
+  - CI: add a pip-audit dependency-vulnerability job.
+         Audited at release: no known CVEs in any runtime dependency.
+  Test suite: 109 -> 134, all passing. No verification formula was changed.
