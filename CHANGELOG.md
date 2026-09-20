@@ -37,3 +37,22 @@ v5.0 (2026-08-20):
          with a Basic set up front and Advanced (PSS/ACC/EDI/SEDI/EDS/SEDS/YuleQ) behind a toggle.
   - Colourful verification-themed app icon (score bars + magnifier + check).
   - Clean re-packaged build for a fresh install.
+
+v5.1 (2026-09-20):
+  - FIX: `--selftest` verified a fixed box (20-26N, 80-88E) at a fixed 5 mm threshold.
+         On the bundled demo data that box peaks at 5.056 mm, so every score came out
+         0/NaN while the test still printed "selftest OK" -- it could not fail.
+         The box is now the middle half of the observation domain and the threshold is
+         the upper quartile of the wet observed points, so events exist on both sides
+         of it for any dataset. The scores are now asserted finite and in range, and
+         the test exits non-zero on failure.
+  - Add a test suite (92 tests) covering the scientific functions: categorical,
+         extremal-dependence, continuous, probabilistic, FSS, CRA, bootstrap,
+         regridding and unit conversion, including degenerate and missing-value cases.
+  - FIX: `shapely` was missing from requirements.txt although `coastlines()` imports
+         it unconditionally, so a pip-only install raised ModuleNotFoundError when the
+         coastline overlay was enabled.
+  - Add docs/METHODOLOGY.md (formulas, references, known caveats) and
+         docs/DEMO_DATA.md (provenance, dimensions, units, conventions).
+  - Add CONTRIBUTING.md, CITATION.cff, packages.txt and a GitHub Actions workflow.
+  - Remove two byte-identical duplicates of app.py from version control.

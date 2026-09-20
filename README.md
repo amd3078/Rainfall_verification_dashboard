@@ -112,11 +112,20 @@ A non-interactive check is also available:
 python app.py --selftest
 ```
 
-> **Note:** `--selftest` currently evaluates a sub-box (20–26°N, 80–88°E) in which the
-> synthetic rainfall field stays below the 5 mm threshold it uses, so it reports
-> `POD 0.000 / FAR nan` while still printing `selftest OK`. It verifies that lazy
-> NetCDF slicing works, not that the scores are meaningful. Use `pytest` (below) for
-> the numerical checks.
+This reads the data lazily, regrids each forecast lead onto the observation grid and
+computes scores over the middle half of the domain, at a threshold taken from the
+upper quartile of the wet observed points so that events exist on both sides of it.
+It exits non-zero if any file is unreadable, if no dates overlap, or if any score
+comes out undefined:
+
+```
+date 2020-06-16  box 75.0-85.0E 13.5-24.5N  threshold 7.89 mm
+lead 1 @7.89mm: POD 0.938 FAR 0.038 CSI 0.905 ETS 0.887 HSS 0.940 N=483
+...
+selftest OK (lazy slice reads, regrid, scores)
+```
+
+It is a smoke test of the pipeline. `pytest` (below) is what checks the numerics.
 
 The bundled demo data is fully described in [`docs/DEMO_DATA.md`](docs/DEMO_DATA.md)
 and can be regenerated with `python make_demo_data.py`.

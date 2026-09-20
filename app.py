@@ -1107,17 +1107,59 @@ def _run_multimodel(st, sb, submitted, ensemble=False, single=False):
         fS.update_layout(title="Spread–skill",xaxis_title=f"Ensemble spread ({UL})",yaxis_title=f"RMSE ({UL})",height=340,margin=dict(t=30))
         cD,cE=st.columns(2); cD.plotly_chart(fP,use_container_width=True); _export_fig(st,fP,"pit"); cE.plotly_chart(fS,use_container_width=True); _export_fig(st,fS,"spread")
 
+def _fail(msg):
+    print(f"selftest FAILED: {msg}"); raise SystemExit(1)
+
 def selftest():
+    """Headless end-to-end check: lazy slice reads -> regrid -> scores.
+
+    The verification box and the threshold are both derived from the data, so
+    the test stays meaningful on whatever DEFAULT_DIR/DEFAULT_OBS point at. A
+    hard-coded box and threshold can land on a dry corner, in which case every
+    score is 0/NaN and the test passes without having exercised anything.
+    """
     ocat = catalog(DEFAULT_OBS)
     ff = sorted(glob.glob(f"{DEFAULT_DIR}/day*fcst*.nc"))
-    fcat = catalog(ff[0]); common = np.intersect1d(fcat["times"], ocat["times"]); date = common[len(common)//2]
+    if not ff: _fail(f"no day*fcst*.nc forecast files under {DEFAULT_DIR}")
+    fcat = catalog(ff[0]); common = np.intersect1d(fcat["times"], ocat["times"])
+    if not len(common): _fail("no dates common to the observation and forecast files")
+    date = common[len(common)//2]
+
     O = read_slice(DEFAULT_OBS, date)
-    olon, olat = ocat["lon"], ocat["lat"]; bj=(olat>=20)&(olat<=26); bi=(olon>=80)&(olon<=88)
+    if O is None: _fail(f"could not read the observation slice for {date}")
+    olon, olat = ocat["lon"], ocat["lat"]
+
+    # Box = the middle half of the observation domain. Exercises the sub-setting
+    # path without assuming where a given dataset puts its rainfall.
+    (la0, la1), (lo0, lo1) = np.quantile(olat, [.25, .75]), np.quantile(olon, [.25, .75])
+    bj = (olat >= la0) & (olat <= la1); bi = (olon >= lo0) & (olon <= lo1)
+    Ob = O[np.ix_(bj, bi)]
+
+    # Threshold = upper quartile of the wet observed points in the box, so events
+    # exist on both sides of it and the contingency table is never degenerate.
+    wet = Ob[np.isfinite(Ob) & (Ob > 0)]
+    if wet.size == 0: _fail(f"no positive rainfall in the verification box on {date}")
+    thr = float(np.quantile(wet, 0.75))
+
+    print(f"date {date}  box {lo0:.1f}-{lo1:.1f}E {la0:.1f}-{la1:.1f}N  threshold {thr:.2f} mm")
     for f in ff:
-        Fr = regrid(fcat["lon"], fcat["lat"], read_slice(f, date), olon, olat)
-        s = scores(Fr[np.ix_(bj,bi)], O[np.ix_(bj,bi)], 5.0)
-        print(f"lead {lead_from(f)} @5mm: POD {s['POD']:.3f} FAR {s['FAR']:.3f} ETS {s['ETS']:.3f} HSS {s['HSS']:.3f} N={s['N']}")
-    print("selftest OK (lazy slice reads)")
+        fs = read_slice(f, date)
+        if fs is None: _fail(f"could not read a forecast slice for {date} from {os.path.basename(f)}")
+        Fr = regrid(fcat["lon"], fcat["lat"], fs, olon, olat)
+        s = scores(Fr[np.ix_(bj, bi)], Ob, thr)
+        lead = lead_from(f)
+        print(f"lead {lead} @{thr:.2f}mm: POD {s['POD']:.3f} FAR {s['FAR']:.3f} "
+              f"CSI {s['CSI']:.3f} ETS {s['ETS']:.3f} HSS {s['HSS']:.3f} N={s['N']}")
+
+        # The scores must actually be defined -- this is what the old fixed
+        # threshold silently lost.
+        if s["N"] == 0: _fail(f"lead {lead}: no valid forecast/observation pairs")
+        for k in ("POD", "CSI", "ETS", "HSS"):
+            if not np.isfinite(s[k]): _fail(f"lead {lead}: {k} is not finite (degenerate contingency table)")
+        if not 0.0 <= s["POD"] <= 1.0: _fail(f"lead {lead}: POD {s['POD']} outside [0,1]")
+        if not 0.0 <= s["CSI"] <= 1.0: _fail(f"lead {lead}: CSI {s['CSI']} outside [0,1]")
+        if not -1.0 <= s["HSS"] <= 1.0: _fail(f"lead {lead}: HSS {s['HSS']} outside [-1,1]")
+    print("selftest OK (lazy slice reads, regrid, scores)")
 
 def run_app():
     import math, streamlit as st, plotly.graph_objects as go, pandas as pd

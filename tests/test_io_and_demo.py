@@ -166,3 +166,61 @@ def test_demo_ensemble_has_members_and_yields_finite_crps():
 def test_demo_model_folders_are_discovered():
     models = app.discover_models(app._DEMO_DIR)
     assert "ModelA" in models and "ModelB" in models
+
+
+# --------------------------------------------------------------------------
+# selftest()
+# --------------------------------------------------------------------------
+def test_selftest_runs_and_exercises_real_scores(capsys):
+    """It must complete, and the scores it prints must not be degenerate."""
+    app.selftest()
+    out = capsys.readouterr().out
+    assert "selftest OK" in out
+
+    leads = [ln for ln in out.splitlines() if ln.startswith("lead ")]
+    assert len(leads) >= 5, "every demo lead should be reported"
+    for line in leads:
+        assert "nan" not in line.lower(), f"degenerate score in: {line}"
+        pod = float(line.split("POD")[1].split()[0])
+        csi = float(line.split("CSI")[1].split()[0])
+        assert 0.0 < pod <= 1.0, f"POD carries no information in: {line}"
+        assert 0.0 < csi <= 1.0, f"CSI carries no information in: {line}"
+
+
+def test_selftest_threshold_leaves_events_on_both_sides(capsys):
+    """The derived threshold must not be above (or at) the observed maximum."""
+    app.selftest()
+    out = capsys.readouterr().out
+    thr = float(out.split("threshold")[1].split("mm")[0])
+
+    ocat = app.catalog(app._DEMO_OBS)
+    date = out.split("date ")[1].split()[0]
+    O = app.read_slice(app._DEMO_OBS, np.datetime64(date))
+    olat, olon = ocat["lat"], ocat["lon"]
+    (la0, la1) = np.quantile(olat, [.25, .75])
+    (lo0, lo1) = np.quantile(olon, [.25, .75])
+    Ob = O[np.ix_((olat >= la0) & (olat <= la1), (olon >= lo0) & (olon <= lo1))]
+
+    assert 0.0 < thr < float(Ob.max()), "threshold must sit inside the observed range"
+    assert (Ob >= thr).any() and (Ob < thr).any(), "both events and non-events must exist"
+
+
+def test_selftest_fails_loudly_when_forecasts_are_missing(tmp_path, monkeypatch):
+    """A missing dataset must exit non-zero, not print OK."""
+    monkeypatch.setattr(app, "DEFAULT_DIR", str(tmp_path))
+    with pytest.raises(SystemExit) as e:
+        app.selftest()
+    assert e.value.code == 1
+
+
+def test_selftest_fails_when_the_box_is_dry(monkeypatch):
+    """A dry field gives a degenerate table; that must fail rather than pass."""
+    real = app.read_slice
+    monkeypatch.setattr(
+        app, "read_slice",
+        lambda p, d, member=None: (np.zeros((45, 41)) if p == app.DEFAULT_OBS
+                                   else real(p, d, member)),
+    )
+    with pytest.raises(SystemExit) as e:
+        app.selftest()
+    assert e.value.code == 1

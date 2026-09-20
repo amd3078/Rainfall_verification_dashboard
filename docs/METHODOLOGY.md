@@ -423,7 +423,6 @@ CSI and BIAS come out correctly, and it costs almost nothing per resample.
 | 8 | Undefined bootstrap resamples are dropped | `boot_ci` | Optimistic intervals for rare events |
 | 9 | Regridding is bilinear | `regrid` | Smooths extremes; affects high thresholds |
 | 10 | Longitude conventions are not converted (0–360 vs −180–180) | `regrid` | Mismatched conventions yield an all-`NaN` field |
-| 11 | `--selftest` box contains no events above its 5 mm threshold | `selftest` | Prints `OK` on degenerate scores; use `pytest` instead |
 
 None of these is a formula error — the implemented equations match their published
 definitions, as verified by the test suite. They are documented assumptions and
