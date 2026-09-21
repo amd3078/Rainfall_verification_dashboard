@@ -45,7 +45,7 @@ REM     conda-forge repodata on low-RAM machines. mamba is already libmamba; for
 REM     conda, install the plugin (one time) and pass --solver=libmamba.
 set SOLVER=
 echo %CONDA% | findstr /i "mamba" >nul || (
-  "%CONDA%" install -n base -y conda-libmamba-solver >nul 2>&1
+  "%CONDA%" install -n base -y --override-channels -c conda-forge conda-libmamba-solver >nul 2>&1
   "%CONDA%" config --set solver libmamba >nul 2>&1
   set "SOLVER=--solver=libmamba"
 )

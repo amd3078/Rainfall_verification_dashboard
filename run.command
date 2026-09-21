@@ -46,7 +46,7 @@ fi
 SOLVER=""
 case "$CONDA" in
   *mamba*) ;;
-  *) "$CONDA" install -n base -y conda-libmamba-solver >/dev/null 2>&1 || true
+  *) "$CONDA" install -n base -y --override-channels -c conda-forge conda-libmamba-solver >/dev/null 2>&1 || true
      "$CONDA" config --set solver libmamba >/dev/null 2>&1 || true
      SOLVER="--solver=libmamba" ;;
 esac

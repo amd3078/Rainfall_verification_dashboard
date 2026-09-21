@@ -139,3 +139,17 @@ v5.2.2 (2026-09-20) -- one-double-click setup on a clean machine:
               licence requirement for larger organisations.
   - The failure message no longer blames low memory for every failure; it now names
          the likely cause (ToS, memory, or network) with the exact fix for each.
+
+v5.2.3 (2026-09-21):
+  - FIX: the launchers installed conda-libmamba-solver with
+           conda install -n base -y conda-libmamba-solver
+         and no channel, so it resolved against the DEFAULT channels --
+         repo.anaconda.com, exactly the ones behind the Terms-of-Service gate.
+         On a plain Miniconda (which has no mamba) that branch runs, so setup
+         could still stop there even with environment.yml pinned to nodefaults.
+         Now `--override-channels -c conda-forge`.
+         Every conda invocation in both launchers has been audited: env create
+         and env update go through environment.yml (nodefaults), the solver
+         install is pinned to conda-forge, `conda run` and `env remove` resolve
+         no channels, and the only calls that touch repo.anaconda.com are the
+         deliberate `tos accept` ones.
