@@ -1,6 +1,6 @@
 Rainfall Verification Dashboard
-version: v5.1
-build: 2026-09-20
+version: v5.3
+build: 2026-09-21
 includes: ensemble+deterministic, each single OR multiple (same engine, full parity);
   ensemble Mean / Probabilistic chosen right after model pick; split/together files;
   sub-folders/flat + top-level "files in this folder"; auto-units; nc+grib;
