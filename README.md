@@ -61,8 +61,9 @@ It opens at <http://localhost:8501>.
 
 ### Conda (recommended if you need GRIB2 or Cartopy)
 
-`cfgrib`/`eccodes` (GRIB2 input) and `cartopy` (Natural Earth coastlines) depend on
-compiled geospatial libraries that install far more reliably through conda-forge:
+`cartopy` (Natural Earth coastlines) depends on compiled geospatial libraries that
+install far more reliably through conda-forge. **GRIB2 does not need this route** —
+`cfgrib`/`eccodes` install from pip:
 
 ```bash
 conda env create -f environment.yml
@@ -82,7 +83,7 @@ All compiled geospatial libraries (PROJ, GEOS, ecCodes) are baked into the image
 ### Double-click launchers
 
 For users who would rather not use a terminal, the repository includes launchers that
-create the conda environment on first run, start the server and open the browser:
+set up everything on first run, start the server and open the browser:
 
 | Platform | File |
 |---|---|
@@ -94,11 +95,44 @@ Each opens **your default browser** at `http://localhost:8501` — Windows via
 it). No browser is hard-coded. If none can be opened automatically the URL is
 printed for you to click.
 
-No prerequisites. If conda is not already installed, the launcher installs
-[Miniforge](https://conda-forge.org/download/) itself, builds the environment and
-starts the app — one double-click, no manual steps. On first run each also creates a
-desktop shortcut, so later launches are a single double-click.
+No prerequisites. On first run each also creates a desktop shortcut, so later
+launches are a single double-click.
 
+**The launcher prefers a Python you already have.** If it finds Python 3.10+, it
+builds a private `.venv` inside this folder with pip — about 700 MB, **no conda, and
+nothing installed outside the folder**. GRIB2 works on this route: the `eccodes`
+wheel bundles the ECMWF C library, so no system package is needed.
+
+Only if no suitable Python exists does it offer to install
+[Miniforge](https://conda-forge.org/download/) — and it shows exactly what will be
+downloaded and installed, and waits for you to agree, before touching anything.
+
+| Route | Size | NetCDF | GRIB2 | Cartopy coastlines |
+|---|---|---|---|---|
+| Existing Python + pip | ~700 MB in `./.venv` | yes | yes | no |
+| Miniforge + conda | ~141 MB download, ~1.2 GB on disk | yes | yes | yes |
+
+To remove everything on the pip route, delete this folder. Nothing else is left
+behind.
+
+#### What the launcher installs
+
+On first run, **before downloading anything**, the launcher shows exactly what it
+will install and waits for you to confirm. If you already have conda, nothing extra
+is downloaded — it only builds the environment.
+
+| | Size | Location |
+|---|---|---|
+| Miniforge (open-source Python, BSD licence) | ~141 MB download (Windows) | `%USERPROFILE%\miniforge3` / `$HOME/miniforge3` |
+| Scientific libraries from conda-forge | ~1.2 GB on disk | inside that folder |
+
+Everything lands in your own user folder: **no administrator rights, no system files
+changed, nothing added to startup**. The app runs only on your machine at
+`http://localhost:8501` and is not reachable from the network. To remove it
+completely, delete the Miniforge folder and this project folder — there is nothing
+else to uninstall.
+
+Prefer to install nothing? Use the pip route above with a Python you already have,
 > Miniforge is used rather than Miniconda because it defaults to conda-forge.
 > Anaconda's channels (`repo.anaconda.com`) now refuse non-interactive use until
 > their Terms of Service are accepted — which aborted setup with
@@ -515,7 +549,7 @@ cdo mergetime NCUM/*-day1.nc NCUM_day1.nc     # per-date files -> per-lead file
 
 | Feature | Requirement | Behaviour when absent |
 |---|---|---|
-| GRIB2 input | `cfgrib` + ECMWF ecCodes (`conda install -c conda-forge cfgrib eccodes`, or the apt packages in [`packages.txt`](packages.txt)) | GRIB files are not listed; NetCDF is unaffected |
+| GRIB2 input | Included in `requirements.txt` (`cfgrib` + `eccodes`; the wheel bundles the C library) | GRIB files are not listed; NetCDF is unaffected |
 | Natural Earth coastlines | `cartopy` | The coastline overlay is empty unless `VERIF_BOUNDARY` is set |
 | Official boundary overlay | A GeoJSON or shapefile at `VERIF_BOUNDARY`, or dropped into `./boundary/` | Falls back to Natural Earth, which may not match official national boundaries |
 | Shapefile boundaries without cartopy | `geopandas` | GeoJSON still works with no extra dependency |

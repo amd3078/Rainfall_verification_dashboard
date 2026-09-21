@@ -16,6 +16,9 @@ netCDF4>=1.6             # xarray engine for .nc / .nc4 files
 plotly>=5.18             # all interactive figures and maps
 kaleido>=0.2.1           # static figure export (PNG/JPEG/SVG/PDF)
 shapely>=2.0             # boundary/coastline polyline clipping (see note below)
+cfgrib>=0.9.10           # GRIB2 input
+eccodes>=2.37            # ECMWF ecCodes - the wheel bundles the C library, so
+                         # GRIB2 needs no conda and no system package
 
 # NOTE on shapely: app.coastlines() imports shapely unconditionally. Without it
 # the "Show coastlines / country borders" option raises ModuleNotFoundError,
@@ -24,11 +27,6 @@ shapely>=2.0             # boundary/coastline polyline clipping (see note below)
 # ---------------------------------------------------------------------------
 # OPTIONAL extras — not installed by default. Install only if you need them.
 # ---------------------------------------------------------------------------
-#
-# GRIB2 input (needs the ECMWF ecCodes C library, see packages.txt / README):
-#   cfgrib>=0.9.10
-#   eccodes>=1.6
-#   conda install -c conda-forge cfgrib eccodes        # recommended route
 #
 # Natural Earth coastlines when no VERIF_BOUNDARY file is supplied:
 #   conda install -c conda-forge cartopy               # pip build is fragile

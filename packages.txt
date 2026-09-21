@@ -1,6 +1,0 @@
-# Debian/Ubuntu system packages (used by Streamlit Community Cloud and by
-# `apt-get install` on a bare server). Only needed for optional GRIB2 input:
-# cfgrib/eccodes require the ECMWF ecCodes C library, which pip cannot supply.
-# Harmless if you only ever read NetCDF.
-libeccodes0
-libeccodes-tools

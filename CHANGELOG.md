@@ -153,3 +153,48 @@ v5.2.3 (2026-09-21):
          install is pinned to conda-forge, `conda run` and `env remove` resolve
          no channels, and the only calls that touch repo.anaconda.com are the
          deliberate `tos accept` ones.
+
+v5.3 (2026-09-21) -- informed consent before anything is installed:
+  - The launchers previously downloaded and installed a Python distribution with
+         no warning: ~141 MB fetched and ~1.2 GB written to disk, silently. A user
+         double-clicking an unfamiliar app has no way to know what is arriving on
+         their machine, which is a fair reason to abandon the install.
+         First run now shows, BEFORE any download: what is installed (Miniforge and
+         the named libraries), the download and on-disk sizes, the exact install
+         location, that no admin rights are needed and no system files are touched,
+         that nothing is sent anywhere and the app is not reachable from the
+         network, and how to remove everything. It then waits for Y.
+         Shown only when something will actually be installed -- if conda is
+         already present, or the environment already exists, the app starts
+         immediately as before.
+  - A shorter notice precedes environment creation, with its size and the fact that
+         it happens once.
+  - README documents the same, with a note that pip or Docker installs nothing.
+  - run.bat: the confirmation is driven by goto rather than a parenthesised block.
+         Inside parentheses cmd expands %OK% when the block is PARSED, so the reply
+         would always have tested as empty and setup would have cancelled itself.
+
+v5.3 (2026-09-21) -- install without conda, and say what is installed:
+  - The launchers now PREFER a Python already on the machine. If Python 3.10+ is
+         found they build a private .venv in the app folder with pip: ~700 MB, no
+         conda, no Miniforge download, no Anaconda Terms-of-Service gate, and
+         nothing written outside the folder. Conda is now only a fallback for
+         machines with no usable Python.
+  - GRIB2 promoted from an optional extra to a core dependency. cfgrib and eccodes
+         are in requirements.txt: the eccodes wheel ships eccodeslib, which bundles
+         the ECMWF C library, so GRIB2 no longer needs conda or a system package.
+         Verified by reading a real GRIB2 file through app.open_any() in a pip-only
+         environment built by the launcher itself.
+         GRIB2 is primary NWP output, so it should never have been opt-in.
+  - packages.txt removed; the apt ecCodes packages it listed are no longer needed.
+  - When conda IS required, first run now shows what will be installed before
+         downloading anything: the components, the download and on-disk sizes, the
+         install location, that no admin rights are needed and no system files are
+         touched, that nothing is sent anywhere, and how to remove it all. It then
+         waits for confirmation. Shown only when something will actually be
+         installed; an already-set-up machine starts straight away.
+  - run.bat restructured around goto rather than a parenthesised block: inside
+         parentheses cmd expands %OK% when the block is PARSED, so the reply would
+         have tested as empty and setup would have cancelled itself.
+  Only cartopy (Natural Earth coastlines) still needs conda. Official boundaries
+  via VERIF_BOUNDARY GeoJSON work without it.
